@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id("io.qameta.allure") version "2.11.0"
 }
 
 group = 'org.example'
@@ -10,13 +11,21 @@ repositories {
 }
 
 dependencies {
-    //testImplementation platform('org.junit:junit-bom:5.9.1')
-    //testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation group: 'org.testng', name: 'testng', version: '7.5'
     testImplementation group: 'io.rest-assured', name: 'rest-assured', version: '4.5.1'
-    testImplementation group: 'org.json', name: 'json', version: '20220924'
+    implementation group: 'io.rest-assured', name: 'rest-assured', version: '4.5.1'
+    implementation group: 'org.json', name: 'json', version: '20220924'
+    testImplementation group: 'io.rest-assured', name: 'json-schema-validator', version: '4.5.1'
+
 }
 
 test {
-    useJUnitPlatform()
+    useTestNG()
+    finalizedBy 'openTestReport'
+
+}
+
+task openTestReport(type: Exec) {
+    dependsOn test
+    commandLine 'cmd', '/c', 'start', 'file:///C:/Users/ashma.shalihah/IdeaProjects/api-automation/build/reports/tests/test/classes/apiauto.APITest.html'
 }

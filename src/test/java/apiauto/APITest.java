@@ -1,37 +1,57 @@
 package apiauto;
+import io.restassured.module.jsv.JsonSchemaValidator;
 
-import io.restassured.RestAssured;
-import org.hamcrest.Matchers;
-import org.json.JSONObject;
+import io.restassured.response.ValidatableResponse;
+
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
+import java.io.File;
 
-import static io.restassured.RestAssured.*;
+import static org.hamcrest.Matchers.equalTo;
 
 
 public class APITest {
 
-    //Automate GET request
-
-//    @Test
-//    public void getUserTest() {
-//        //Define baseURI
-//        RestAssured.baseURI = "https://reqres.in/";
-//        //Test GET api/users?page=1 with total data 6 per page
-//        given().when().get("api/users?page=1")
-//                .then()
-//                .log().all() //cetak response ke console
-//                .assertThat().statusCode(200) //assertion status code=200
-//                .assertThat().body("page", Matchers.equalTo(1)) //assertion data page
-//                .assertThat().body("data.id", Matchers.hasSize(6)); //assertion count data id
-//
-//    }
-
-    //Automate POST request
     @Test
-    public void createNewUserTest() {
-        RestAssured.baseURI = "https://reqres.in/";
-
+    public void testStatusCode() {
+        ValidatableResponse response = APIUtil.getAirportByCode("CGK");
+        response.assertThat()
+                .statusCode(200)
+                .assertThat()
+                .body("data.attributes.name", equalTo("Soekarno-Hatta International Airport"));
     }
+
+    @Test
+    public void testPositiveCaseInput() {
+        String valueFrom = "CGK";
+        String valueTo = "NRT";
+
+        File file = new File("src/test/resources/jsonSchema/GetAirportDataSchema.json");
+
+        ValidatableResponse response = APIUtil.postAirportDistance(valueFrom, valueTo);
+        response.assertThat()
+                .statusCode(200)
+                .assertThat()
+                .body("data.attributes.from_airport.iata", equalTo(valueFrom))
+                .body(JsonSchemaValidator.matchesJsonSchema(file));
+    }
+
+    @Test
+    public void testNegativeCaseInput(){
+        String valueFrom = "1234??";
+        String valueTo = "NRT";
+
+        ValidatableResponse response = APIUtil.postAirportDistance(valueFrom, valueTo);
+        response.assertThat()
+                .statusCode(422); //  the API returns 422 for invalid input
+    }
+
+    @Test
+    public void testEdgeCase(){
+        ValidatableResponse response = APIUtil.getAirportsWithPage(0);
+        response.assertThat()
+                .statusCode(404); // the API returns 400 for not found page parameter
+    }
+
+
 }
